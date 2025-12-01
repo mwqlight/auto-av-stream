@@ -1,0 +1,33 @@
+apiVersion: v2
+name: avstream
+description: AV Stream Space - 智能音视频流媒体平台
+
+type: application
+
+# 版本号
+version: 1.0.0
+
+# 应用版本
+appVersion: 1.0.0
+
+# 依赖项
+dependencies:
+  - name: postgresql
+    version: 12.1.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  
+  - name: redis
+    version: 17.3.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  
+  - name: minio
+    version: 12.0.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: minio.enabled
+  
+  - name: mongodb
+    version: 13.0.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled

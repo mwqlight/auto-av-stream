@@ -1,0 +1,205 @@
+# AV Stream Space Helm Chart 配置
+
+# 全局配置
+global:
+  # 镜像仓库
+  imageRegistry: ""
+  # 镜像拉取策略
+  imagePullPolicy: IfNotPresent
+  # 存储类
+  storageClass: ""
+
+# 基础设施配置
+infrastructure:
+  # PostgreSQL配置
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: "avstream_password"
+      database: "avstream"
+      username: "avstream_user"
+    primary:
+      persistence:
+        size: 20Gi
+    
+  # Redis配置
+  redis:
+    enabled: true
+    auth:
+      enabled: false
+    architecture: standalone
+    master:
+      persistence:
+        size: 10Gi
+    
+  # MinIO配置
+  minio:
+    enabled: true
+    auth:
+      rootUser: "minioadmin"
+      rootPassword: "minioadmin123"
+    persistence:
+      size: 50Gi
+    defaultBuckets: "media-uploads,ai-models,live-recordings,user-avatars"
+    
+  # MongoDB配置
+  mongodb:
+    enabled: true
+    auth:
+      enabled: true
+      rootPassword: "admin123"
+      username: "admin"
+      database: "avstream"
+    architecture: standalone
+    persistence:
+      size: 20Gi
+
+# 微服务配置
+services:
+  # 网关服务
+  gateway:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avstream/gateway
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      type: LoadBalancer
+      port: 80
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+    
+  # 认证服务
+  auth-service:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avstream/auth-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+    
+  # 媒体服务
+  media-service:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avstream/media-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1
+    
+  # 直播服务
+  live-service:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avstream/live-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1
+    
+  # AI服务
+  ai-service:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: avstream/ai-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1
+    
+  # 监控服务
+  monitor-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: avstream/monitor-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+
+# 前端应用配置
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: avstream/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: LoadBalancer
+    port: 80
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 250m
+
+# 监控系统配置
+monitoring:
+  # Prometheus配置
+  prometheus:
+    enabled: true
+    
+  # Grafana配置
+  grafana:
+    enabled: true
+    adminPassword: "admin123"
+    
+  # 服务网格配置
+  serviceMesh:
+    enabled: false

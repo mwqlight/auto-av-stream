@@ -1,0 +1,153 @@
+# Grafana数据源配置
+# AV Stream音视频流媒体平台监控数据源
+
+apiVersion: 1
+
+datasources:
+  # Prometheus数据源
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 5s
+      queryTimeout: 60s
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.45.0
+      cacheLevel: "High"
+      disableMetricsLookup: false
+      incrementalQueryOverlapWindow: 10m
+      customQueryParameters: ""
+    version: 1
+    editable: true
+
+  # PostgreSQL数据源
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgresql:5432
+    user: avstream_user
+    secureJsonData:
+      password: "avstream_password"
+    database: avstream_monitor
+    jsonData:
+      sslmode: "disable"
+      postgresVersion: 1300
+      timescaledb: false
+      maxOpenConns: 100
+      maxIdleConns: 100
+      connMaxLifetime: 14400
+    version: 1
+    editable: true
+
+  # MySQL数据源（可选，用于其他数据库）
+  - name: MySQL
+    type: mysql
+    access: proxy
+    url: mysql:3306
+    user: avstream_user
+    secureJsonData:
+      password: "avstream_password"
+    database: avstream
+    jsonData:
+      timeInterval: ""
+    version: 1
+    editable: true
+
+  # Elasticsearch数据源（用于日志分析）
+  - name: Elasticsearch
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: "[avstream-logs-]YYYY.MM.DD"
+    jsonData:
+      timeField: "@timestamp"
+      esVersion: 8.0.0
+      interval: "Daily"
+      timeInterval: "1m"
+      logMessageField: "message"
+      logLevelField: "level"
+      maxConcurrentShardRequests: 5
+      includeFrozen: false
+    version: 1
+    editable: true
+
+  # Loki数据源（用于日志聚合）
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: "prometheus"
+          matcherRegex: "traceID=(\\w+)"
+          name: "TraceID"
+          url: "$${__value.raw}"
+    version: 1
+    editable: true
+
+  # Jaeger数据源（用于分布式追踪）
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    jsonData:
+      nodeGraph:
+        enabled: true
+    version: 1
+    editable: true
+
+  # Tempo数据源（用于分布式追踪）
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      httpMethod: GET
+      serviceMap:
+        datasourceUid: "prometheus"
+      search:
+        hide: false
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: "loki"
+      tracesToLogs:
+        datasourceUid: "loki"
+        tags: ["job", "instance", "pod", "namespace"]
+        mapTagNamesEnabled: false
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
+        filterByTraceID: false
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: "prometheus"
+        tags: ["job", "instance", "pod", "namespace"]
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
+    version: 1
+    editable: true
+
+  # InfluxDB数据源（用于时序数据）
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: avstream
+    user: avstream_user
+    secureJsonData:
+      password: "avstream_password"
+    jsonData:
+      httpMode: POST
+      timeInterval: "5s"
+      version: "Flux"
+      organization: "avstream"
+      defaultBucket: "avstream"
+      tlsAuth: false
+      tlsAuthWithCACert: false
+    version: 1
+    editable: true

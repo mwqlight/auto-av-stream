@@ -1,0 +1,121 @@
+server:
+  port: 8084
+  servlet:
+    context-path: /live
+
+spring:
+  application:
+    name: live-service
+  
+  # 数据库配置
+  datasource:
+    url: jdbc:postgresql://localhost:5432/avstream_live
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+    timeout: 60000ms
+
+  # WebSocket配置
+  websocket:
+    allowed-origins: "*"
+
+# 直播服务配置
+live:
+  # 推流配置
+  push:
+    # RTMP推流地址模板
+    rtmp-url-template: rtmp://localhost:1935/live/{streamKey}
+    # HLS推流地址模板
+    hls-url-template: http://localhost:8080/hls/{streamKey}/index.m3u8
+    # WebRTC推流地址模板
+    webrtc-url-template: ws://localhost:8889/ws/{streamKey}
+  
+  # 拉流配置
+  pull:
+    # RTMP拉流地址模板
+    rtmp-url-template: rtmp://localhost:1935/live/{streamKey}
+    # HLS拉流地址模板
+    hls-url-template: http://localhost:8080/hls/{streamKey}/index.m3u8
+    # WebRTC拉流地址模板
+    webrtc-url-template: ws://localhost:8889/ws/{streamKey}
+  
+  # 录制配置
+  record:
+    enabled: true
+    # 录制文件保存路径
+    save-path: /data/records
+    # 录制格式
+    format: mp4
+    # 最大录制时长（分钟）
+    max-duration: 120
+  
+  # 流媒体服务器配置
+  media-server:
+    # MediaMTX配置
+    mediamtx:
+      api-url: http://localhost:9997
+      # RTMP端口
+      rtmp-port: 1935
+      # HLS端口
+      hls-port: 8080
+      # WebRTC端口
+      webrtc-port: 8889
+
+# 安全配置
+security:
+  jwt:
+    secret: live-service-secret-key
+    expiration: 86400000
+
+# 日志配置
+logging:
+  level:
+    com.avstream.live: DEBUG
+    org.springframework.web.socket: INFO
+  file:
+    name: logs/live-service.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Eureka客户端配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

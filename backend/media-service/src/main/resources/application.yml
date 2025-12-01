@@ -1,0 +1,197 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /media
+
+spring:
+  application:
+    name: media-service
+  
+  # Spring Cloud Config
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: karl
+    password: 
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  
+  # Redis Configuration
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 1
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 30000
+  
+  # MinIO Configuration
+  minio:
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket:
+      media: avstream-media
+      temp: avstream-temp
+    secure: false
+  
+  # FFmpeg Configuration
+  ffmpeg:
+    path: /usr/bin/ffmpeg
+    ffprobe-path: /usr/bin/ffprobe
+    timeout: 300000
+    max-threads: 4
+
+# Media Processing Configuration
+media:
+  processing:
+    # Video Processing
+    video:
+      max-file-size: 2GB
+      allowed-formats: [mp4, avi, mov, mkv, webm]
+      max-resolution: 3840x2160
+      default-bitrate: 8M
+      thumbnail:
+        width: 320
+        height: 180
+        format: jpeg
+    
+    # Audio Processing
+    audio:
+      max-file-size: 500MB
+      allowed-formats: [mp3, wav, flac, aac, ogg]
+      default-bitrate: 320k
+    
+    # Image Processing
+    image:
+      max-file-size: 100MB
+      allowed-formats: [jpg, jpeg, png, gif, webp]
+      max-resolution: 8192x8192
+    
+    # Transcoding Settings
+    transcoding:
+      enabled: true
+      parallel-jobs: 3
+      quality-preset: medium
+      hw-acceleration: auto
+
+# MediaMTX Configuration
+mediamtx:
+  base-url: http://localhost:9997
+  api-path: /v2
+  rtmp:
+    port: 1935
+    enabled: true
+  hls:
+    port: 8888
+    enabled: true
+  webrtc:
+    port: 8889
+    enabled: true
+  stream:
+    default-timeout: 30s
+    max-connections: 100
+
+# WebRTC Configuration
+webrtc:
+  stun-servers:
+    - stun:stun.l.google.com:19302
+    - stun:stun1.l.google.com:19302
+  turn-servers:
+    - url: turn:turn.example.com:3478
+      username: user
+      credential: pass
+  ice-timeout: 30000
+  max-bandwidth: 1000000
+  video:
+    codec-priority: [VP8, H264]
+    max-framerate: 30
+  audio:
+    codec-priority: [OPUS, PCMU]
+
+# WebSocket Configuration
+websocket:
+  endpoint: /ws/webrtc
+  allowed-origins: "*"
+  buffer-size: 8192
+  message-size-limit: 65536
+  send-timeout: 10000
+
+# Security Configuration
+security:
+  jwt:
+    secret: avstream-media-secret-key-2024
+    expiration: 86400000 # 24 hours
+    refresh-expiration: 604800000 # 7 days
+
+# Logging Configuration
+logging:
+  level:
+    com.avstream.media: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/media-service.log
+    max-size: 100MB
+    max-history: 30
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90

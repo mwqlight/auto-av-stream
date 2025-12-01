@@ -1,0 +1,155 @@
+# 测试环境配置
+spring:
+  # 数据源配置
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+  
+  # Redis配置（使用嵌入式Redis）
+  redis:
+    host: localhost
+    port: 6379
+    
+  # MinIO配置（使用模拟客户端）
+  minio:
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket: media-test
+    
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+      enabled: true
+
+# 日志配置
+logging:
+  level:
+    com.avstream.media: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+# 应用配置
+app:
+  # 存储配置
+  storage:
+    max-file-size: 104857600 # 100MB
+    allowed-file-types: 
+      - video/mp4
+      - video/avi
+      - video/mov
+      - video/webm
+      - audio/mp3
+      - audio/wav
+      - image/jpeg
+      - image/png
+      - image/gif
+    
+  # 转码配置
+  transcode:
+    max-concurrent-tasks: 5
+    task-timeout: 3600 # 1小时
+    output-formats:
+      - mp4
+      - webm
+      - mov
+      - avi
+    templates:
+      - h264_720p
+      - h265_1080p
+      - av1_4k
+      
+  # 安全配置
+  security:
+    jwt:
+      secret: test-jwt-secret-key
+      expiration: 86400000 # 24小时
+      
+# 测试配置
+test:
+  # 模拟服务配置
+  mock:
+    minio:
+      enabled: true
+    redis:
+      enabled: true
+      
+# 异步配置
+async:
+  # 转码任务线程池
+  transcode:
+    core-pool-size: 2
+    max-pool-size: 5
+    queue-capacity: 10
+    thread-name-prefix: "TranscodeTask-"
+    
+  # 文件处理线程池
+  file-process:
+    core-pool-size: 2
+    max-pool-size: 3
+    queue-capacity: 20
+    thread-name-prefix: "FileProcess-"
+    
+  # 缩略图生成线程池
+  thumbnail:
+    core-pool-size: 1
+    max-pool-size: 2
+    queue-capacity: 10
+    thread-name-prefix: "Thumbnail-"
+    
+  # 元数据提取线程池
+  metadata:
+    core-pool-size: 1
+    max-pool-size: 1
+    queue-capacity: 5
+    thread-name-prefix: "Metadata-"
+
+# 定时任务配置
+scheduling:
+  # 清理临时文件任务（测试环境更频繁）
+  cleanup-temp-files:
+    cron: "0 */1 * * * ?" # 每分钟执行
+    
+  # 重试失败转码任务
+  retry-failed-transcode:
+    cron: "0 */5 * * * ?" # 每5分钟执行
+    
+  # 清理过期转码任务
+  cleanup-expired-transcode:
+    cron: "0 0 */1 * * ?" # 每小时执行
+    
+  # 统计存储使用情况
+  storage-statistics:
+    cron: "0 */10 * * * ?" # 每10分钟执行
+    
+  # 检查转码任务状态
+  transcode-status-check:
+    cron: "0 */2 * * * ?" # 每2分钟执行
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true

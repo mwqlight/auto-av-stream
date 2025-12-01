@@ -1,0 +1,293 @@
+version: '3.8'
+
+services:
+  # 基础设施服务（从docker-compose-infra.yml继承）
+  postgres:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: postgres
+  
+  redis:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: redis
+  
+  minio:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: minio
+  
+  mongodb:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: mongodb
+  
+  mediamtx:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: mediamtx
+  
+  eureka:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: eureka
+  
+  config-server:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: config-server
+  
+  prometheus:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: prometheus
+  
+  node-exporter:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: node-exporter
+  
+  cadvisor:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: cadvisor
+  
+  postgresql-exporter:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: postgresql-exporter
+  
+  redis-exporter:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: redis-exporter
+  
+  mongodb-exporter:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: mongodb-exporter
+  
+  grafana:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: grafana
+  
+  zipkin:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: zipkin
+  
+  elasticsearch:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: elasticsearch
+  
+  kibana:
+    extends:
+      file: docker/docker-compose-infra.yml
+      service: kibana
+
+  # 网关服务
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    container_name: avstream-gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    ports:
+      - "8080:8080"
+    networks:
+      - avstream-network
+    depends_on:
+      - eureka
+      - config-server
+      - postgres
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 认证服务
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: avstream-auth-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    ports:
+      - "8081:8080"
+    networks:
+      - avstream-network
+    depends_on:
+      - eureka
+      - config-server
+      - postgres
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 媒体服务
+  media-service:
+    build:
+      context: ./backend/media-service
+      dockerfile: Dockerfile
+    container_name: avstream-media-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    ports:
+      - "8082:8080"
+    networks:
+      - avstream-network
+    depends_on:
+      - eureka
+      - config-server
+      - postgres
+      - redis
+      - minio
+      - mediamtx
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 直播服务
+  live-service:
+    build:
+      context: ./backend/live-service
+      dockerfile: Dockerfile
+    container_name: avstream-live-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    ports:
+      - "8083:8080"
+    networks:
+      - avstream-network
+    depends_on:
+      - eureka
+      - config-server
+      - postgres
+      - redis
+      - mediamtx
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AI服务
+  ai-service:
+    build:
+      context: ./backend/ai-service
+      dockerfile: Dockerfile
+    container_name: avstream-ai-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    ports:
+      - "8084:8080"
+    networks:
+      - avstream-network
+    depends_on:
+      - eureka
+      - config-server
+      - postgres
+      - redis
+      - mongodb
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 监控服务
+  monitor-service:
+    build:
+      context: ./backend/monitor-service
+      dockerfile: Dockerfile
+    container_name: avstream-monitor-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    ports:
+      - "8085:8080"
+    networks:
+      - avstream-network
+    depends_on:
+      - eureka
+      - config-server
+      - postgres
+      - redis
+      - prometheus
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 前端应用
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: avstream-frontend
+    ports:
+      - "80:80"
+    networks:
+      - avstream-network
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# 网络配置
+networks:
+  avstream-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# 卷配置
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local

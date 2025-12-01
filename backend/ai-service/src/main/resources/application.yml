@@ -1,0 +1,151 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /ai
+
+spring:
+  application:
+    name: ai-service
+  
+  # Spring Cloud Config
+  cloud:
+    config:
+      enabled: false
+  
+  # 数据库配置
+  datasource:
+    url: jdbc:postgresql://localhost:5432/avstream_ai
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    database: 2
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+    timeout: 60000ms
+
+# AI服务配置
+ai:
+  # Whisper语音识别配置
+  whisper:
+    model-path: /models/whisper
+    model-size: base
+    language: zh
+    temperature: 0.0
+    best-of: 5
+    beam-size: 5
+    patience: 1.0
+    length-penalty: 1.0
+    suppress-tokens: "-1"
+    initial-prompt: ""
+    condition-on-previous-text: true
+    compression-ratio-threshold: 2.4
+    logprob-threshold: -1.0
+    no-speech-threshold: 0.6
+    word-timestamps: false
+    prepend-punctuations: "\"'“¿([{-\n"
+    append-punctuations: "\"'.。,，!！?？:：”)}]\n"
+  
+  # Stable Diffusion图像生成配置
+  stable-diffusion:
+    model-path: /models/stable-diffusion
+    model-name: stable-diffusion-v1-5
+    steps: 20
+    guidance-scale: 7.5
+    width: 512
+    height: 512
+    seed: -1
+    sampler: dpm++_2m
+    clip-skip: 1
+    hires-fix: false
+    hires-upscale: 2.0
+    hires-steps: 10
+    hires-upscaler: Latent
+  
+  # TTS文本转语音配置
+  tts:
+    model-path: /models/tts
+    model-name: vits
+    language: zh
+    speaker: default
+    speed: 1.0
+    pitch: 0.0
+    energy: 0.0
+    sample-rate: 22050
+    format: wav
+  
+  # 其他AI模型配置
+  models:
+    # 图像风格转换
+    style-transfer:
+      model-path: /models/style-transfer
+      model-name: stylegan2
+    
+    # 图像超分辨率
+    super-resolution:
+      model-path: /models/super-resolution
+      model-name: real-esrgan
+      scale: 4
+    
+    # 图像修复
+    inpainting:
+      model-path: /models/inpainting
+      model-name: lama
+  
+  # 通用配置
+  cache:
+    enabled: true
+    ttl: 3600
+  
+  # 并发配置
+  thread-pool:
+    core-size: 4
+    max-size: 16
+    queue-capacity: 100
+    keep-alive-seconds: 60
+
+# 安全配置
+security:
+  jwt:
+    secret: ai-service-secret-key
+    expiration: 86400000
+
+# 日志配置
+logging:
+  level:
+    com.avstream.ai: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+  file:
+    name: logs/ai-service.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Eureka客户端配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}

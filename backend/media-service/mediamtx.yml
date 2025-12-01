@@ -1,0 +1,155 @@
+# MediaMTX配置文件
+# 流媒体服务器配置
+
+# 日志配置
+logLevel: debug
+logDestinations: [stdout]
+
+# 路径配置
+paths:
+  # 默认路径配置
+  all:
+    # 源配置
+    source: publisher
+    sourceOnDemand: true
+    sourceOnDemandStartTimeout: 10s
+    sourceOnDemandCloseAfter: 10s
+    
+    # 读取器配置
+    readUser: reader
+    readPass: reader123
+    
+    # 发布者配置
+    publishUser: publisher
+    publishPass: publisher123
+    
+    # 录制配置
+    record: false
+    recordPath: ./recordings
+    recordFormat: mp4
+    
+    # HLS配置
+    hlsAlwaysRemux: true
+    hlsSegmentCount: 3
+    hlsSegmentDuration: 1s
+    hlsPartDuration: 200ms
+    hlsSegmentMaxSize: 0
+    hlsAllowOrigin: "*"
+    hlsDirectory: ./hls
+    
+    # WebRTC配置
+    webrtc: true
+    webrtcAllowOrigin: "*"
+    
+    # RTMP配置
+    rtmp: true
+    rtmpAllowOrigin: "*"
+    
+    # RTSP配置
+    rtsp: true
+    rtspAllowOrigin: "*"
+    
+    # SRT配置
+    srt: true
+    srtAllowOrigin: "*"
+    
+    # 性能配置
+    readBufferCount: 512
+    
+    # 安全配置
+    ipCamUser: camuser
+    ipCamPass: campass
+    
+    # 自定义路径示例
+  live:
+    source: publisher
+    sourceOnDemand: false
+    
+  vod:
+    source: publisher
+    sourceOnDemand: true
+    
+  # WebRTC推流路径
+  webrtc:
+    source: publisher
+    sourceProtocol: webrtc
+    webrtc: true
+    
+  # RTMP推流路径
+  rtmp:
+    source: publisher
+    sourceProtocol: rtmp
+    rtmp: true
+
+# 认证配置
+authMethods: [internal, jwt]
+
+# API配置
+api: true
+apiAddress: :9997
+
+# 指标配置
+metrics: true
+metricsAddress: :9998
+
+# PPROF配置
+pprof: false
+pprofAddress: :9999
+
+# RTMP配置
+rtmpAddress: :1935
+rtmpEncryption: false
+rtmpServerKey: server.key
+rtmpServerCert: server.crt
+
+# RTMPS配置
+rtmpsAddress: :1936
+rtmps: false
+rtmpsServerKey: server.key
+rtmpsServerCert: server.crt
+
+# HLS配置
+hlsAddress: :8888
+hlsEncryption: false
+hlsServerKey: server.key
+hlsServerCert: server.crt
+
+# WebRTC配置
+webrtcAddress: :8889
+webrtcEncryption: false
+webrtcServerKey: server.key
+webrtcServerCert: server.crt
+
+# RTSP配置
+rtspAddress: :8554
+rtspEncryption: false
+rtspServerKey: server.key
+rtspServerCert: server.crt
+
+# RTSPS配置
+rtspsAddress: :8322
+rtsps: false
+rtspsServerKey: server.key
+rtspsServerCert: server.crt
+
+# SRT配置
+srtAddress: :8890
+
+# 性能配置
+readTimeout: 10s
+writeTimeout: 10s
+readBufferCount: 512
+writeBufferCount: 512
+
+# 自定义头部
+customHeaders:
+  Access-Control-Allow-Origin: "*"
+  Access-Control-Allow-Credentials: "true"
+  Access-Control-Allow-Methods: "GET, POST, PUT, DELETE, OPTIONS"
+  Access-Control-Allow-Headers: "*"
+
+# 外部认证服务器
+externalAuthenticationURL: ""
+
+# 预加载路径
+preloadPaths: []

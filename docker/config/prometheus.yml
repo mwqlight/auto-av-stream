@@ -1,0 +1,134 @@
+# Prometheus配置
+# AV Stream音视频流媒体平台监控配置
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'avstream'
+    environment: 'development'
+
+# 告警规则配置
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+# 抓取配置
+scrape_configs:
+  # Prometheus自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+    scrape_interval: 5s
+
+  # Spring Boot应用监控
+  - job_name: 'spring-boot-apps'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      # 网关服务
+      - targets: ['gateway:8080']
+        labels:
+          service: 'gateway'
+          instance: 'gateway-1'
+      # 认证服务
+      - targets: ['auth-service:8081']
+        labels:
+          service: 'auth'
+          instance: 'auth-1'
+      # 媒体服务
+      - targets: ['media-service:8082']
+        labels:
+          service: 'media'
+          instance: 'media-1'
+      # 直播服务
+      - targets: ['live-service:8083']
+        labels:
+          service: 'live'
+          instance: 'live-1'
+      # AI服务
+      - targets: ['ai-service:8084']
+        labels:
+          service: 'ai'
+          instance: 'ai-1'
+      # 监控服务
+      - targets: ['monitor-service:8085']
+        labels:
+          service: 'monitor'
+          instance: 'monitor-1'
+
+  # 数据库监控
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgresql:9187']
+        labels:
+          service: 'postgresql'
+          database: 'avstream'
+    scrape_interval: 30s
+
+  # Redis监控
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:9121']
+        labels:
+          service: 'redis'
+          instance: 'redis-1'
+    scrape_interval: 30s
+
+  # MongoDB监控
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb:9216']
+        labels:
+          service: 'mongodb'
+          database: 'avstream'
+    scrape_interval: 30s
+
+  # MinIO监控
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']
+        labels:
+          service: 'minio'
+          instance: 'minio-1'
+    metrics_path: /minio/v2/metrics/cluster
+    scrape_interval: 30s
+
+  # MediaMTX监控
+  - job_name: 'mediamtx'
+    static_configs:
+      - targets: ['mediamtx:9997']
+        labels:
+          service: 'mediamtx'
+          instance: 'mediamtx-1'
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # Node Exporter (系统监控)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'node-exporter'
+          instance: 'server-1'
+    scrape_interval: 30s
+
+  # cAdvisor (容器监控)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: 'cadvisor'
+          instance: 'docker-1'
+    scrape_interval: 30s
+
+# 远程写入配置（可选，用于长期存储）
+remote_write:
+  - url: "http://thanos-receive:10908/api/v1/receive"
+    queue_config:
+      max_samples_per_send: 1000
+      capacity: 10000
+
+# 远程读取配置（可选）
+remote_read:
+  - url: "http://thanos-query:10902/api/v1/read"

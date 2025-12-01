@@ -1,0 +1,144 @@
+{
+  "version": "1.0",
+  "credential": {
+    "accessKey": "minioadmin",
+    "secretKey": "minioadmin123"
+  },
+  "region": "us-east-1",
+  "browser": "on",
+  "notify": {
+    "amqp": {},
+    "nats": {},
+    "elasticsearch": {},
+    "redis": {},
+    "postgresql": {},
+    "mysql": {},
+    "kafka": {},
+    "webhook": {}
+  },
+  "logger": {
+    "console": {
+      "enabled": true
+    },
+    "file": {
+      "enabled": true,
+      "filename": "/var/log/minio/minio.log"
+    }
+  },
+  "compress": {
+    "enabled": true,
+    "extensions": [".txt", ".log", ".csv", ".json", ".xml"],
+    "mime-types": ["text/*", "application/json", "application/xml"]
+  },
+  "cache": {
+    "drives": [],
+    "expiry": 90,
+    "maxuse": 80,
+    "exclude": []
+  },
+  "api": {
+    "requestsMax": 10000,
+    "requestsDeadline": 30
+  },
+  "heal": {
+    "bitrot": "on",
+    "sleep": 250
+  },
+  "storageclass": {
+    "standard": "EC:2",
+    "rrs": "EC:1"
+  },
+  "cacheclass": {
+    "standard": "EC:2"
+  },
+  "warmback": {
+    "enabled": false
+  },
+  "etcd": {
+    "endpoints": [],
+    "pathPrefix": "",
+    "corednsPath": "",
+    "clientCert": "",
+    "clientCertKey": "",
+    "tls": {
+      "enabled": false,
+      "skipVerify": false
+    }
+  },
+  "site": {
+    "name": "av-stream-minio",
+    "region": "us-east-1"
+  },
+  "buckets": [
+    {
+      "name": "media-uploads",
+      "policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject"
+            ],
+            "Resource": "arn:aws:s3:::media-uploads/*"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ai-models",
+      "policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::ai-models/*"
+          }
+        ]
+      }
+    },
+    {
+      "name": "live-recordings",
+      "policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject"
+            ],
+            "Resource": "arn:aws:s3:::live-recordings/*"
+          }
+        ]
+      }
+    },
+    {
+      "name": "user-avatars",
+      "policy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::user-avatars/*"
+          }
+        ]
+      }
+    }
+  ]
+}

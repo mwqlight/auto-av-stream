@@ -1,0 +1,45 @@
+spring:
+  # 测试数据源配置 - 使用内存数据库
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        
+  # Redis配置 - 测试环境禁用
+  redis:
+    enabled: false
+
+# 测试环境禁用定时任务
+monitor:
+  system:
+    enabled: false
+  application:
+    enabled: false
+    services: auth-service,media-service,ai-service,live-service,gateway
+  alert:
+    enabled: false
+  logging:
+    enabled: false
+
+# 禁用Eureka客户端
+spring.cloud.discovery.enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+# 测试日志配置
+logging:
+  level:
+    com.avstream.monitor: INFO
+    org.springframework: WARN

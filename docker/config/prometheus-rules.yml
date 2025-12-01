@@ -1,0 +1,201 @@
+# Prometheus告警规则
+# AV Stream音视频流媒体平台告警配置
+
+groups:
+  # 系统级别告警
+  - name: system_alerts
+    rules:
+      # CPU使用率告警
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "CPU使用率过高"
+          description: "实例 {{ $labels.instance }} 的CPU使用率超过80% (当前值: {{ $value }}%)"
+
+      # 内存使用率告警
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "内存使用率过高"
+          description: "实例 {{ $labels.instance }} 的内存使用率超过85% (当前值: {{ $value }}%)"
+
+      # 磁盘使用率告警
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "磁盘使用率过高"
+          description: "实例 {{ $labels.instance }} 的磁盘使用率超过90% (当前值: {{ $value }}%)"
+
+  # 应用服务告警
+  - name: application_alerts
+    rules:
+      # 服务不可用告警
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "服务不可用"
+          description: "服务 {{ $labels.service }} 在实例 {{ $labels.instance }} 上不可用"
+
+      # 高错误率告警
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) / rate(http_server_requests_seconds_count[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP错误率过高"
+          description: "服务 {{ $labels.service }} 的HTTP错误率超过5% (当前值: {{ $value }}%)"
+
+      # 高延迟告警
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API延迟过高"
+          description: "服务 {{ $labels.service }} 的95%延迟超过1秒 (当前值: {{ $value }}秒)"
+
+      # JVM内存使用率告警
+      - alert: HighJVMMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM堆内存使用率过高"
+          description: "服务 {{ $labels.service }} 的JVM堆内存使用率超过80% (当前值: {{ $value }}%)"
+
+  # 数据库告警
+  - name: database_alerts
+    rules:
+      # 数据库连接数告警
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends > 50
+        for: 3m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "数据库连接数过高"
+          description: "PostgreSQL数据库连接数超过50 (当前值: {{ $value }})"
+
+      # Redis内存使用率告警
+      - alert: HighRedisMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis内存使用率超过80% (当前值: {{ $value }}%)"
+
+      # MongoDB操作延迟告警
+      - alert: HighMongoDBLatency
+        expr: mongodb_op_latency_seconds > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          service: mongodb
+        annotations:
+          summary: "MongoDB操作延迟过高"
+          description: "MongoDB操作延迟超过0.5秒 (当前值: {{ $value }}秒)"
+
+  # 音视频服务告警
+  - name: media_alerts
+    rules:
+      # MediaMTX流数量告警
+      - alert: HighMediaStreams
+        expr: mediamtx_streams_total > 100
+        for: 2m
+        labels:
+          severity: warning
+          service: mediamtx
+        annotations:
+          summary: "媒体流数量过多"
+          description: "MediaMTX当前流数量超过100 (当前值: {{ $value }})"
+
+      # 音视频处理延迟告警
+      - alert: HighMediaProcessingLatency
+        expr: media_processing_latency_seconds > 2
+        for: 3m
+        labels:
+          severity: warning
+          service: media
+        annotations:
+          summary: "音视频处理延迟过高"
+          description: "音视频处理延迟超过2秒 (当前值: {{ $value }}秒)"
+
+      # 直播推流失败告警
+      - alert: LiveStreamPushFailure
+        expr: rate(live_stream_push_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: live
+        annotations:
+          summary: "直播推流失败"
+          description: "检测到直播推流失败 (失败次数: {{ $value }})"
+
+  # 存储服务告警
+  - name: storage_alerts
+    rules:
+      # MinIO存储使用率告警
+      - alert: HighMinIOUsage
+        expr: minio_cluster_capacity_usable_total_bytes / minio_cluster_capacity_total_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: minio
+        annotations:
+          summary: "MinIO存储使用率过高"
+          description: "MinIO存储使用率超过85% (当前值: {{ $value }}%)"
+
+      # 存储写入失败告警
+      - alert: StorageWriteFailure
+        expr: rate(storage_write_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "存储写入失败"
+          description: "检测到存储写入失败 (失败次数: {{ $value }})"
+
+  # 网络告警
+  - name: network_alerts
+    rules:
+      # 网络带宽使用率告警
+      - alert: HighNetworkBandwidth
+        expr: rate(node_network_receive_bytes_total[5m]) > 100000000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "网络带宽使用率过高"
+          description: "网络接收带宽超过100MB/s (当前值: {{ $value }} bytes/s)"
+
+      # 网络连接数告警
+      - alert: HighNetworkConnections
+        expr: node_netstat_Tcp_CurrEstab > 10000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "网络连接数过多"
+          description: "TCP连接数超过10000 (当前值: {{ $value }})"

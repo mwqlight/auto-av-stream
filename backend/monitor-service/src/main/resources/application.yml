@@ -1,0 +1,141 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: monitor-service
+  
+  # 数据源配置
+  datasource:
+    url: jdbc:postgresql://localhost:5432/avstream_monitor
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+    timeout: 60000ms
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+    enabled-by-default: true
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 1m
+    enable:
+      jvm: true
+      system: true
+      process: true
+      logback: true
+      tomcat: true
+
+# 监控服务配置
+monitor:
+  # 系统监控配置
+  system:
+    enabled: true
+    interval: 60000  # 1分钟
+    metrics:
+      cpu: true
+      memory: true
+      disk: true
+      network: true
+  
+  # 应用监控配置
+  application:
+    enabled: true
+    interval: 30000  # 30秒
+    services:
+      - auth-service
+      - media-service
+      - ai-service
+      - live-service
+      - gateway
+  
+  # 告警配置
+  alert:
+    enabled: true
+    rules:
+      - name: "高CPU使用率"
+        metric: "system.cpu.usage"
+        threshold: 80
+        duration: 300000  # 5分钟
+        severity: "WARNING"
+      - name: "高内存使用率"
+        metric: "jvm.memory.used"
+        threshold: 85
+        duration: 300000
+        severity: "WARNING"
+      - name: "服务不可用"
+        metric: "application.availability"
+        threshold: 0
+        duration: 60000
+        severity: "CRITICAL"
+  
+  # 日志收集配置
+  logging:
+    enabled: true
+    retention-days: 30
+    max-size: 100MB
+
+# Eureka客户端配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# 日志配置
+logging:
+  level:
+    com.avstream.monitor: DEBUG
+    org.springframework.web: INFO
+  file:
+    name: logs/monitor-service.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
